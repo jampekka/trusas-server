@@ -49,6 +49,7 @@
     "zone.js": "^0.8.8"
   },
   "devDependencies": {
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.24.1",
     "coffee-loader": "github:jampekka/coffee-loader",
     "coffeescript": "^2.0.0-beta1",
     "css-loader": "^0.28.0",
