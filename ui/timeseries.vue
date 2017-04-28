@@ -8,8 +8,8 @@ R = require 'lazyremote'
 module.exports =
 	name: "trusas-timeseries"
 	props:
-		service: required: true
-		api: required: true
+		stream: required: true
+		labels: default: {}
 		span: type: Number, default: 30
 		maxSamples: type: Number, default: 10000
 		bufferDuration: type: Number, default: 0.1
@@ -21,9 +21,6 @@ module.exports =
 		xrng = new Bokeh.Range1d()
 		yrng = new Bokeh.DataRange1d()
 		console.log xrng
-		#plot = new Bokeh.Plot
-		#	x_range: xrng
-		#	y_range: yrng
 		plot = plt.figure
 			x_range: xrng
 			y_range: yrng
@@ -32,15 +29,18 @@ module.exports =
 		plot.toolbar.logo = null
 		plot.toolbar_location = null
 		
-		# EVERY FUCKING TIME!!
-		#resize = =>
-		#	#console.log @$el.clientWidth
-		#	#plot.setv
-		#	#	plot_width: @$el.clientWidth
-		#	#	plot_height: @$el.clientHeight
-		#window.addEventListener 'resize', resize
-		#resize()
 
+		lines = {}
+		add_line = (field) ->
+			source = new Bokeh.ColumnDataSource data: x: [], y: []
+			line = new Bokeh.Line
+				x: field: 'x'
+				y: field: 'y'
+			plot.add_glyph line, source
+			lines[field] =
+				source: source
+				line: line
+		###
 		source = new Bokeh.ColumnDataSource
 			data:
 				x: []
@@ -48,20 +48,21 @@ module.exports =
 		line = new Bokeh.Line
 			x: field: 'x'
 			y: field: 'y'
-		plot.add_glyph line, source
+		###
 		plt.show plot, @$el
-		console.log "Got service", await R.resolve @service.name
 		update = (d) =>
 			[hdr, d] = d
-			#s = (new Date()).getTime()/1000
+			for field, value of d
+				unless field of lines
+					lines[field] = add_line(field)
+				lines[field].source.stream
+					x: [hdr.ts]
+					y: [value]
 			s = hdr.ts
 			xrng.start = s - @span
 			xrng.end = s
-			source.stream
-				x: [hdr.ts]
-				y: [Math.sin d.time]
 			return
-		R.resolve @service.dataStream().forEach update
+		R.resolve @stream.forEach update
 	data: -> {}
 </script>
 

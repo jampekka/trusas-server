@@ -9,6 +9,7 @@ ShellQuote = require 'shell-quote'
 disown = require './utils/disown.coffee'
 Lockfile = Promise.promisifyAll require 'lockfile'
 _ = require 'lodash'
+fmtr = require 'fmtr'
 
 Most = require 'most'
 Most.hold = require('@most/hold').hold
@@ -71,7 +72,6 @@ class Runner
 	stream: (file, beginAt) -> JsonStream file, beginAt
 	dataStream: (beginAt='end') -> @stream @outfile, beginAt
 	errorStream: (beginAt='start') ->
-		console.log "Streaming errors"
 		@stream @errfile, beginAt
 
 
@@ -115,6 +115,11 @@ class Runner
 			command = @service.command
 		else
 			command = ShellQuote.parse @service.command
+		vars =
+			directory: @directory
+			name: @name
+			basepath: Path.join @directory, @name
+		command = (fmtr(c, vars) for c in command)
 		#process = child_process.spawn command[0],
 		pid = await disown command,
 			stdout: @outfile
@@ -157,7 +162,7 @@ class Runner
 			return
 		while true
 			try
-				process.kill pid, 'SIGTERM'
+				process.kill -pid, 'SIGTERM'
 			catch error
 				if error.code == 'ESRCH'
 					await fs.writeFileAsync @pidfile, "0"

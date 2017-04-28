@@ -11,7 +11,7 @@ R = require 'lazyremote'
 
 
 
-do ->
+app = ->
 	trusas = (await R '/api/v1/').root
 	socket = R.internals(trusas).opts.remote.socket
 	
@@ -30,7 +30,7 @@ do ->
 			(path: '/session/:id', component: require './session.vue')
 		]
 	
-	app = new Vue
+	app =
 		created: ->
 			@$router.trusas = trusas
 			setsock = =>
@@ -39,10 +39,14 @@ do ->
 			socket.addEventListener 'close', setsock
 			socket.addEventListener 'error', setsock
 
-		
+		components: {}
 		data: ->
 			socketStatus: socket.readyState
-			YETANOTHERFUCKINGHACK: true
 		router: router
 		render: require('./main.vue').render
-	app.$mount("#container")
+	return app
+	#app.$mount("#container")
+
+app.Vue = Vue
+module.exports = app
+

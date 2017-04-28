@@ -7,12 +7,14 @@ L = require 'lazyremote'
 Service = require './service.coffee'
 Promise = require 'bluebird'
 NpmRun = require 'npm-run'
+Path = require 'path'
 
 util = require 'util'
 
 @serve = (opts={}) ->
 	app = express()
-	app.use express.static 'ui'
+	app.use express.static opts.ui
+	app.use express.static Path.join __dirname, './ui/'
 	require('express-ws')(app)
 	spec = opts.spec
 	

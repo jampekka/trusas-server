@@ -1,4 +1,4 @@
-<style scoped>
+<style>
 .logo {
 	text-align: center;
 	padding: 10px;
@@ -41,6 +41,10 @@
 	position: absolute !important;
 	left: 0; right: 0; top: 0; bottom: 0;
 }
+
+.hideBadge:after {
+	display: none;
+}
 </style>
 <template lang="pug">
 
@@ -57,17 +61,20 @@ v-app(left-fixed-sidebar,v-if="loaded")
 				v-subheader Services
 				v-list-item(v-for="(info, name) of session.services")
 					v-list-tile(:title="info.state",avatar)
-						v-list-tile-avatar
+						v-list-tile-avatar(@click.stop="showStatus(info)",
+								v-badge.left.overlap="{value: info.warnings.length}",class="warning--after", :class="{hideBadge: info.warnings.length == 0}")
 							v-icon(v-if="info.state == 'running'",success,title='Running').success--text lens
 							v-icon(v-else-if="info.state == 'terminated'",success,title='Finished').primary--text check_box
 							v-icon(v-else-if="info.state == 'dead'",error,title='Dead').error--text error
 							v-progress-circular(v-else,indeterminate,title='Unknown').primary--text
 
-						v-list-tile-content(@click.stop="showStatus(info)")
+						v-list-tile-content
 							v-list-tile-title {{info.service.label || name}}
 							
-						v-list-tile-action(v-if="info.warnings && info.warnings.length")
-							v-icon(warning).warning--text warning
+						v-list-tile-action(v-if="['running', 'terminated'].indexOf(info.state) < 0")
+							v-btn(icon,class="primary",title="Restart",@click.native="restart(name)")
+								v-icon refresh
+
 
 				v-divider(light)
 				v-btn(large,warning,block,raised,@click.native="confirmTerminate = true") Terminate
@@ -77,15 +84,16 @@ v-app(left-fixed-sidebar,v-if="loaded")
 				div This session is finished. You can look around, but nothing intresting's gonna happen.
 					v-btn(primary,@click.native="$router.replace('/')") Start a new one
 			v-container(fluid)
-				.viz-grid
-					.tile.double
-						trusas-timeseries(v-if="getRemote()",:service="getRemote().services.test",:api="getApi()")
-					.tile Stuff
-					.tile Stuff
-					.tile Stuff
-					.tile Stuff
-					.tile Stuff
-					.filler
+				trusas-visualizations(v-if="getRemote",:remote="getRemote()",:api="getApi()")
+				//.viz-grid
+				//	.tile.double
+				//		trusas-timeseries(v-if="getRemote()",:service="getRemote().services.test",:api="getApi()")
+				//	.tile Stuff
+				//	.tile Stuff
+				//	.tile Stuff
+				//	.tile Stuff
+				//	.tile Stuff
+				//	.filler
 							
 		v-modal(v-for="(info, name) of session.services" v-model="info.display_status")
 			v-card
@@ -154,6 +162,8 @@ module.exports =
 			return true
 
 	methods:
+		restart: (name) ->
+			await R.resolve @private.remote.services[name].start()
 		getRemote: -> @private.remote
 		getApi: -> @api
 		terminate: ->
