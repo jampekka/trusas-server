@@ -28,7 +28,6 @@ pid_is_running = (pid) ->
 	catch
 		return false
 
-OUT_TEMPLATE="$(directory)"
 
 JsonStream = (file, beginAt='end') ->
 	s = Tail.createReadStream file,
@@ -44,22 +43,21 @@ JsonStream = (file, beginAt='end') ->
 				throw error
 			return [{'ts': null}, {'unknown_error_line': line}]
 
+OUT_TEMPLATE="${basepath}.jsons"
+ERR_TEMPLATE="${basepath}.err"
+
 class Runner
 	constructor: (@name, @service, @directory) ->
+		@pathvars =
+			directory: @directory
+			name: @name
+			basepath: Path.join @directory, @name
+
+
 		@pidfile = Path.join @directory, '_pids', @name + '.pid'
 		@pidlock = Path.join @directory, '_pids', @name + '.pidlock'
-		@outfile = (Path.join @directory, @name + ".jsons")
-		@errfile = (Path.join @directory, @name + ".err")
-		
-		"""
-		s = Tail.createReadStream @outfile,
-			beginAt: 'end'
-			waitForCreate: true
-		Readline.createInterface input: s, terminal: false
-		.on "line", (line) =>
-			obj = JSON.parse line
-			@emit "sample", obj
-		"""
+		@outfile = fmtr (@service.outfile ? OUT_TEMPLATE), @pathvars
+		@errfile = fmtr (@service.errfile ? ERR_TEMPLATE), @pathvars
 		
 		@state = Most.hold Most.skipRepeats Most.create (add, end, error) =>
 			state = undefined
@@ -115,11 +113,7 @@ class Runner
 			command = @service.command
 		else
 			command = ShellQuote.parse @service.command
-		vars =
-			directory: @directory
-			name: @name
-			basepath: Path.join @directory, @name
-		command = (fmtr(c, vars) for c in command)
+		command = (fmtr(c, @pathvars) for c in command)
 		#process = child_process.spawn command[0],
 		pid = await disown command,
 			stdout: @outfile

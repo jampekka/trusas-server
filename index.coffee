@@ -18,9 +18,14 @@ util = require 'util'
 	require('express-ws')(app)
 	spec = opts.spec
 	
-	api = ->
+	base_api = ->
 		lodash: lodash
 		sessions: new Service.SessionServer spec, opts.directory
+	
+	if opts.api
+		api = -> opts.api base_api, opts
+	else
+		api = base_api
 	
 	app.ws '/api/v1', (socket) ->
 		L socket, expose: api()

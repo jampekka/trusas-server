@@ -9,6 +9,7 @@ module.exports =
 	name: "trusas-timeseries"
 	props:
 		stream: required: true
+		api: required: true
 		labels: default: {}
 		span: type: Number, default: 30
 		maxSamples: type: Number, default: 10000
@@ -62,7 +63,7 @@ module.exports =
 			xrng.start = s - @span
 			xrng.end = s
 			return
-		R.resolve @stream.forEach update
+		R.resolve @stream.forEach @api.forEachNotPending update
 	data: -> {}
 </script>
 

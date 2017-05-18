@@ -85,16 +85,7 @@ v-app(left-fixed-sidebar,v-if="loaded")
 					v-btn(primary,@click.native="$router.replace('/')") Start a new one
 			v-container(fluid)
 				trusas-visualizations(v-if="getRemote",:remote="getRemote()",:api="getApi()")
-				//.viz-grid
-				//	.tile.double
-				//		trusas-timeseries(v-if="getRemote()",:service="getRemote().services.test",:api="getApi()")
-				//	.tile Stuff
-				//	.tile Stuff
-				//	.tile Stuff
-				//	.tile Stuff
-				//	.tile Stuff
-				//	.filler
-							
+
 		v-modal(v-for="(info, name) of session.services" v-model="info.display_status")
 			v-card
 				v-card-title {{ info.service.label || name }}
@@ -165,7 +156,7 @@ module.exports =
 		restart: (name) ->
 			await R.resolve @private.remote.services[name].start()
 		getRemote: -> @private.remote
-		getApi: -> @api
+		getApi: -> @private.api
 		terminate: ->
 			await R.resolve @private.remote.terminate()
 		showStatus: (info) ->
